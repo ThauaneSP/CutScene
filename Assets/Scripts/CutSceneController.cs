@@ -6,27 +6,56 @@ public class CutSceneController : MonoBehaviour {
 
     public static CutSceneController instancia = null;
 
-    public List<GameObject> cameras = new List<GameObject>();
-    int ativa;
+    public List<Camera> cameras = new List<Camera>();
+    List<Animator> anim = new List<Animator>();
 
-    void Start() {
+    public AudioClip musica;
+
+    int ativa;
+    AudioSource audioSource;
+
+    void Awake() {
+        audioSource = GetComponent<AudioSource>();
         if (instancia == null) {
             instancia = this;
         }
-
+        else if (instancia != null) {
+            Destroy(gameObject);
+        }
 
         for (int i = 0; i < cameras.Count; i++) {
-            cameras[i].SetActive(false);
+            anim.Add(cameras[i].GetComponent<Animator>());
+            desativarCamera(i);
         }
-        cameras[0].SetActive(true);
+
         ativa = 0;
+        ativarCamera(ativa);
+        audioSource.PlayOneShot(musica);
+
+}
+
+    void ativarCamera(int i)
+ {
+        cameras[i].depth = 1;
+        anim[i].SetTrigger("Start");
+    }
+
+    void desativarCamera(int i) {
+        cameras[i].depth = 0;
     }
 
     public void ProximaCamera() {
-        cameras[ativa].SetActive(false);
         if (ativa < cameras.Count - 1) {
             ativa++;
-            cameras[ativa].SetActive(true);
+            ativarCamera(ativa);
+            desativarCamera(ativa - 1);
+        }
+        else {
+            desativarCamera(ativa);
+            audioSource.Stop();
+            GameController.instancia.TrFinishCutScene();
+            Destroy(this.gameObject);
         }
     }
 }
+
